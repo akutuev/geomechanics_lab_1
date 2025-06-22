@@ -58,11 +58,10 @@
     </div>
   </div>
   
-  
   <script>
     const svgScene = d3.select("#svgScene");
     const xScale = d3.scaleLinear();
-    const yScale = d3.scaleLinear()
+    const yScale = d3.scaleLinear();
 
     subscribeToInputsEvent();
     reDrawMohrChart();
@@ -83,6 +82,8 @@
       const maxValue = center + radius;
       const domainMinX = minValue < chSett.domainMinMargin ? minValue + chSett.domainMinMargin : chSett.domainMinMargin;
       const domainMaxX = maxValue > chSett.domainMaxMargin ? maxValue + chSett.domainMaxMargin : chSett.domainMaxMargin;
+      
+      svgScene.selectAll("*").remove();  
 
       xScale
       .domain([domainMinX, domainMaxX])
@@ -92,8 +93,6 @@
       .domain([chSett.domainLengthFromY, chSett.domainLengthTo])
       .range([chSett.height - chSett.margin, chSett.margin]);
 
-      svgScene.selectAll("*").remove();  
-
       svgScene.append("g")
       .attr("transform", `translate(0,${yScale(0)})`)
       .call(d3.axisBottom(xScale));
@@ -102,21 +101,25 @@
         .attr("transform", `translate(${xScale(0)},0)`)
         .call(d3.axisLeft(yScale));
 
+      drawChartMesh(chSett.height, chSett.width, chSett.margin);   
+    }
+
+    function drawChartMesh(height, width, margin) {
       svgScene.append("g")
         .attr("class", "grid grid-y")
-        .attr("transform", `translate(${chSett.margin}, 0)`)
+        .attr("transform", `translate(${margin}, 0)`)
         .call(
           d3.axisLeft(yScale)
-            .tickSize(-(chSett.width - chSett.margin - chSett.margin)) 
+            .tickSize(-(width - margin - margin)) 
             .tickFormat("")
       );
 
       svgScene.append("g")
         .attr("class", "grid grid-x")
-        .attr("transform", `translate(0, ${chSett.height - chSett.margin})`)
+        .attr("transform", `translate(0, ${height - margin})`)
         .call(
           d3.axisBottom(xScale)
-            .tickSize(-(chSett.height - chSett.margin - chSett.margin))
+            .tickSize(-(height - margin - margin))
             .tickFormat("")
       );
     }
@@ -158,7 +161,30 @@
         .attr("fill", "none")
         .attr("stroke", "black")
         .attr("stroke-width", 1);
-    } 
+      
+      drawDotWithLabel(scaleCenterX + scaleRadius, scaleCenterY, `σ₁= ${centerX + radius}`);
+      drawDotWithLabel(scaleCenterX - scaleRadius, scaleCenterY, `σ₂= ${centerX - radius}`);
+      drawDotWithLabel(scaleCenterX, scaleCenterY - scaleRadius, `τmax= ${radius}`);
+      drawDotWithLabel(scaleCenterX, scaleCenterY + scaleRadius, `τmin= -${radius}`);
+    }
+
+    function drawDotWithLabel(locationX, locationY, text) {
+      const labelMargin = 10;
+      
+      svgScene.append("text")
+        .attr("x", locationX + labelMargin)
+        .attr("y", locationY - labelMargin)
+        .text(text)
+        .attr("font-size", "14px")
+        .attr("fill", "black");
+
+      svgScene.append("circle")
+        .attr("cx", locationX)
+        .attr("cy", locationY)
+        .attr("r", 3)
+        .attr("fill", "black");
+    }
+
   </script>
 </body>
 </html>
