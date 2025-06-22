@@ -2,63 +2,163 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>D3 XY Axis + Semi-Circle</title>
+  <title>Mohr's circle</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
   <style>
-    svg {
-      border: 1px solid #ccc;
+    #svgScene {
+      border: 1px solid hsl(0, 20%, 96%);
+      width: 700px;
+      height: 700px;
+    }
+
+    .grid line {
+      stroke: lightgray;
+      stroke-opacity: 0.7;
+      shape-rendering: crispEdges;
+    }
+
+    .grid path {
+      stroke-width: 0;
+    }
+
+    .container{
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <svg width="700" height="700"></svg>
-
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8">
+        <h2>Mohr's circle</h2>
+      </div>
+      <div class="col-md-4">
+        <h5>Settings</h5>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-8">
+        <svg id="svgScene"></svg>
+      </div>
+      <div class="col-md-4">
+        <form>
+          <div class="form-group">
+            <label for="numberInput">X stress</label>
+            <input type="number" class="form-control" id="Xstress" value="100">
+          </div>
+          <div class="form-group">
+            <label for="numberInput">Y stress</label>
+            <input type="number" class="form-control" id="Ystress" value="20">
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  
   <script>
-    const width = 700;
-    const height = 700;
-    const margin = { top: 20, right: 20, bottom: 40, left: 50 };
-
-    const svg = d3.select("svg");
-
-    const xScale = d3.scaleLinear()
-      .domain([-100, 100])
-      .range([margin.left, width - margin.right]);
-
+    const svgScene = d3.select("#svgScene");
+    const xScale = d3.scaleLinear();
     const yScale = d3.scaleLinear()
-      .domain([-100, 100])
-      .range([height - margin.bottom, margin.top]);
 
-    svg.append("g")
+    subscribeToInputsEvent();
+    reDrawMohrChart();
+
+    function reDrawAxis(center, radius) {
+      const chSett = {
+        width: 700,
+        height: 700,
+        margin: 20,
+        domainLengthFromX: -10,
+        domainLengthFromY: -100,
+        domainLengthTo: 100,
+        domainMinMargin: -10,
+        domainMaxMargin: 10,
+      };
+
+      const minValue = center - radius;
+      const maxValue = center + radius;
+      const domainMinX = minValue < chSett.domainMinMargin ? minValue + chSett.domainMinMargin : chSett.domainMinMargin;
+      const domainMaxX = maxValue > chSett.domainMaxMargin ? maxValue + chSett.domainMaxMargin : chSett.domainMaxMargin;
+
+      xScale
+      .domain([domainMinX, domainMaxX])
+      .range([chSett.margin, chSett.width - chSett.margin]);
+
+      yScale
+      .domain([chSett.domainLengthFromY, chSett.domainLengthTo])
+      .range([chSett.height - chSett.margin, chSett.margin]);
+
+      svgScene.selectAll("*").remove();  
+
+      svgScene.append("g")
       .attr("transform", `translate(0,${yScale(0)})`)
       .call(d3.axisBottom(xScale));
 
-    svg.append("g")
-      .attr("transform", `translate(${xScale(0)},0)`)
-      .call(d3.axisLeft(yScale));
+      svgScene.append("g")
+        .attr("transform", `translate(${xScale(0)},0)`)
+        .call(d3.axisLeft(yScale));
 
-    const centerX = 30;
-    const centerY = 0;
-    const radius = 25;
+      svgScene.append("g")
+        .attr("class", "grid grid-y")
+        .attr("transform", `translate(${chSett.margin}, 0)`)
+        .call(
+          d3.axisLeft(yScale)
+            .tickSize(-(chSett.width - chSett.margin - chSett.margin)) 
+            .tickFormat("")
+      );
 
-    drawCircle(55, 0, 40, "red");
-    drawCircle(30, 0, 15, "white");
-    drawCircle(70, 0, 25, "white");
+      svgScene.append("g")
+        .attr("class", "grid grid-x")
+        .attr("transform", `translate(0, ${chSett.height - chSett.margin})`)
+        .call(
+          d3.axisBottom(xScale)
+            .tickSize(-(chSett.height - chSett.margin - chSett.margin))
+            .tickFormat("")
+      );
+    }
 
-    function drawCircle(centerX, centerY, radius, color) {
-        const cx = xScale(centerX);
-        const cy = yScale(centerY);
-        const r = xScale(centerX + radius) - xScale(centerX);
+    function subscribeToInputsEvent() {
+      document.getElementById('Xstress').addEventListener('input', (event) => {
+        reDrawMohrChart();
+      });
 
-        const path = d3.path();
-        path.moveTo(cx - r, cy);  
-        path.arc(cx, cy, r, Math.PI, 0); 
+      document.getElementById('Ystress').addEventListener('input', (event) => {
+        reDrawMohrChart();
+      });
+    }
 
-        svg.append("path")
-        .attr("d", path.toString())
-        .attr("fill", color)
+    function reDrawMohrChart() {
+      const xInput = document.getElementById('Xstress');
+      const yInput = document.getElementById('Ystress');
+
+      const xValue = parseFloat(xInput.value) || 0;
+      const yValue = parseFloat(yInput.value) || 0;
+      const tauXY = 0; // nil now
+
+      const center = (xValue + yValue) / 2;
+      const radius = Math.sqrt(Math.pow((xValue - yValue) / 2, 2) + Math.pow(tauXY, 2));
+
+      reDrawAxis(center, radius);
+      drawMohrCircle(center, radius);
+    }
+
+    function drawMohrCircle(centerX, radius) {
+      const scaleCenterX = xScale(centerX);
+      const scaleCenterY = yScale(0);
+      const scaleRadius = xScale(centerX + radius) - xScale(centerX);
+
+      svgScene.append("circle")
+        .attr("cx", scaleCenterX)
+        .attr("cy", scaleCenterY)
+        .attr("r", scaleRadius)
+        .attr("fill", "none")
         .attr("stroke", "black")
         .attr("stroke-width", 1);
-    }  
+    } 
   </script>
 </body>
 </html>
