@@ -53,6 +53,10 @@
             <label for="numberInput">Y stress</label>
             <input type="number" class="form-control" id="Ystress" value="20">
           </div>
+          <div class="form-group">
+            <label for="numberInput">Shear stress</label>
+            <input type="number" class="form-control" id="ShearStress" value="5">
+          </div>
         </form>
       </div>
     </div>
@@ -125,22 +129,19 @@
     }
 
     function subscribeToInputsEvent() {
-      document.getElementById('Xstress').addEventListener('input', (event) => {
-        reDrawMohrChart();
-      });
-
-      document.getElementById('Ystress').addEventListener('input', (event) => {
-        reDrawMohrChart();
-      });
+      document.getElementById('Xstress').addEventListener('input', () => reDrawMohrChart());
+      document.getElementById('Xstress').addEventListener('input', () => reDrawMohrChart());
+      document.getElementById('ShearStress').addEventListener('input', () => reDrawMohrChart());
     }
 
     function reDrawMohrChart() {
       const xInput = document.getElementById('Xstress');
       const yInput = document.getElementById('Ystress');
+      const shearInput = document.getElementById('ShearStress');
 
       const xValue = parseFloat(xInput.value) || 0;
       const yValue = parseFloat(yInput.value) || 0;
-      const tauXY = 0; // nil now
+      const tauXY = parseFloat(shearInput.value) || 0;
 
       const center = (xValue + yValue) / 2;
       const radius = Math.sqrt(Math.pow((xValue - yValue) / 2, 2) + Math.pow(tauXY, 2));
@@ -161,11 +162,11 @@
         .attr("fill", "none")
         .attr("stroke", "black")
         .attr("stroke-width", 1);
-      
-      drawDotWithLabel(scaleCenterX + scaleRadius, scaleCenterY, `σ₁= ${centerX + radius}`);
-      drawDotWithLabel(scaleCenterX - scaleRadius, scaleCenterY, `σ₂= ${centerX - radius}`);
-      drawDotWithLabel(scaleCenterX, scaleCenterY - scaleRadius, `τmax= ${radius}`);
-      drawDotWithLabel(scaleCenterX, scaleCenterY + scaleRadius, `τmin= -${radius}`);
+
+      drawDotWithLabel(scaleCenterX + scaleRadius, scaleCenterY, `σ₁= ${round(centerX + radius)}`);
+      drawDotWithLabel(scaleCenterX - scaleRadius, scaleCenterY, `σ₂= ${round(centerX - radius)}`);
+      drawDotWithLabel(scaleCenterX, scaleCenterY - scaleRadius, `τmax= ${round(radius)}`);
+      drawDotWithLabel(scaleCenterX, scaleCenterY + scaleRadius, `τmin= -${round(radius)}`);
     }
 
     function drawDotWithLabel(locationX, locationY, text) {
@@ -183,6 +184,10 @@
         .attr("cy", locationY)
         .attr("r", 3)
         .attr("fill", "black");
+    }
+
+    function round(num) {
+      return Number(num.toFixed(2));
     }
 
   </script>
