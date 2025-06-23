@@ -1,5 +1,5 @@
 # Geomechanics Lab 1
-A an interactive web app to visualize Mohr’s Circle and basic failure envelope for stress analysis in geomechanics.
+An interactive web app to visualize Mohr’s Circle and basic failure envelope for stress analysis in geomechanics.
 
 ## Project Overview
 

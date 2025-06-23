@@ -34,10 +34,7 @@
   <div class="container">
     <div class="row">
       <div class="col-md-8">
-        <h2>Mohr's circle</h2>
-      </div>
-      <div class="col-md-4">
-        <h5>Settings</h5>
+        <h2>Mohr's circle chart</h2>
       </div>
     </div>
     <div class="row">
@@ -45,7 +42,8 @@
         <svg id="svgScene"></svg>
       </div>
       <div class="col-4">
-        <form>
+        <h5>Settings</h5>
+        <form class="mb-4">
           <div class="form-group">
             <label for="numberInput">X stress</label>
             <input type="number" class="form-control" id="Xstress" value="100">
@@ -60,11 +58,10 @@
           </div>
           <div class="form-group">
             <label for="numberInput">Rotation angle</label>
-            <input type="range" class="form-range" min="-90" max="90" value="0" id="AngleRange">
+            <input type="range" class="form-range" min="0" max="180" value="0" id="AngleRange">
             <input type="number" disabled class="form-control" id="AngleInput" value="0">
           </div>
         </form>
-        
       </div>
     </div>
   </div>
@@ -89,15 +86,16 @@
         domainMaxMargin: 10,
       };
 
-      const minValue = center - radius;
-      const maxValue = center + radius;
-      const domainMinX = minValue < chSett.domainMinMargin ? minValue + chSett.domainMinMargin : chSett.domainMinMargin;
-      const domainMaxX = maxValue > chSett.domainMaxMargin ? maxValue + chSett.domainMaxMargin : chSett.domainMaxMargin;
+      // This has a bug and shuld be fixed: unproportional axis
+      // const minValue = center - radius;
+      // const maxValue = center + radius;
+      // const domainMinX = minValue < chSett.domainMinMargin ? minValue + chSett.domainMinMargin : chSett.domainMinMargin;
+      // const domainMaxX = maxValue > chSett.domainMaxMargin ? maxValue + chSett.domainMaxMargin : chSett.domainMaxMargin;
+      // .domain([domainMinX, domainMaxX])
       
       svgScene.selectAll("*").remove();  
 
       xScale
-      // .domain([domainMinX, domainMaxX])
       .domain([chSett.domainLengthFromY, chSett.domainLengthTo])
       .range([chSett.margin, chSett.width - chSett.margin]);
 
@@ -163,10 +161,10 @@
 
       reDrawAxis(center, radius);
       drawMohrCircle(center, radius);
-      drawAngleStress(xValue, yValue, tauXY, angleValue);
+      drawAngleStress(xValue, yValue, tauXY, angleValue, center);
     }
 
-    function drawAngleStress(xValue, yValue, tauXY, thetaDegrees) {
+    function drawAngleStress(xValue, yValue, tauXY, thetaDegrees, center) {
       const theta = thetaDegrees * Math.PI / 180;
   
       const sigmaAvg = (xValue + yValue) / 2;
@@ -176,9 +174,18 @@
       const tauTheta = -sigmaDiff * Math.sin(2 * theta) + tauXY * Math.cos(2 * theta);
 
       const scaleX = xScale(sigmaTheta);
-      const scaleY = yScale(tauTheta);
+      const scaleY = yScale(-1 * tauTheta); // convention: positive values are counter-clockwise
 
       drawDotWithLabel(scaleX, scaleY, `[${round(sigmaTheta)}, ${round(tauTheta)}]`);
+
+      svgScene
+        .append("line")
+        .attr("x1", xScale(center))
+        .attr("y1", yScale(0))
+        .attr("x2", xScale(sigmaTheta))
+        .attr("y2", yScale(-1 * tauTheta))
+        .attr("stroke", "black")
+        .attr("stroke-width", 1);
     }
 
     function drawMohrCircle(centerX, radius) {
