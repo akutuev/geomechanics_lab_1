@@ -5,13 +5,14 @@
   <title>Mohr's circle</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"> -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
 
   <style>
     #svgScene {
       border: 1px solid hsl(0, 20%, 96%);
-      width: 700px;
-      height: 700px;
+      width: 800px;
+      height: 800px;
     }
 
     .grid line {
@@ -40,10 +41,10 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-md-8">
+      <div class="col-8">
         <svg id="svgScene"></svg>
       </div>
-      <div class="col-md-4">
+      <div class="col-4">
         <form>
           <div class="form-group">
             <label for="numberInput">X stress</label>
@@ -55,9 +56,15 @@
           </div>
           <div class="form-group">
             <label for="numberInput">Shear stress</label>
-            <input type="number" class="form-control" id="ShearStress" value="5">
+            <input type="number" class="form-control" id="ShearStress" value="0">
+          </div>
+          <div class="form-group">
+            <label for="numberInput">Rotation angle</label>
+            <input type="range" class="form-range" min="-90" max="90" value="0" id="AngleRange">
+            <input type="number" disabled class="form-control" id="AngleInput" value="0">
           </div>
         </form>
+        
       </div>
     </div>
   </div>
@@ -72,12 +79,12 @@
 
     function reDrawAxis(center, radius) {
       const chSett = {
-        width: 700,
-        height: 700,
+        width: 800,
+        height: 800 ,
         margin: 20,
         domainLengthFromX: -10,
-        domainLengthFromY: -100,
-        domainLengthTo: 100,
+        domainLengthFromY: -150,
+        domainLengthTo: 150,
         domainMinMargin: -10,
         domainMaxMargin: 10,
       };
@@ -90,7 +97,8 @@
       svgScene.selectAll("*").remove();  
 
       xScale
-      .domain([domainMinX, domainMaxX])
+      // .domain([domainMinX, domainMaxX])
+      .domain([chSett.domainLengthFromY, chSett.domainLengthTo])
       .range([chSett.margin, chSett.width - chSett.margin]);
 
       yScale
@@ -132,22 +140,45 @@
       document.getElementById('Xstress').addEventListener('input', () => reDrawMohrChart());
       document.getElementById('Xstress').addEventListener('input', () => reDrawMohrChart());
       document.getElementById('ShearStress').addEventListener('input', () => reDrawMohrChart());
+      document.getElementById('AngleRange').addEventListener('input', (event) => {
+        console.log(event.target.value);
+        document.getElementById('AngleInput').value = event.target.value;
+        reDrawMohrChart();
+      });
     }
 
     function reDrawMohrChart() {
       const xInput = document.getElementById('Xstress');
       const yInput = document.getElementById('Ystress');
       const shearInput = document.getElementById('ShearStress');
+      const rotationAngle = document.getElementById('AngleRange');
 
       const xValue = parseFloat(xInput.value) || 0;
       const yValue = parseFloat(yInput.value) || 0;
       const tauXY = parseFloat(shearInput.value) || 0;
+      const angleValue = parseFloat(rotationAngle.value) || 0;
 
       const center = (xValue + yValue) / 2;
       const radius = Math.sqrt(Math.pow((xValue - yValue) / 2, 2) + Math.pow(tauXY, 2));
 
       reDrawAxis(center, radius);
       drawMohrCircle(center, radius);
+      drawAngleStress(xValue, yValue, tauXY, angleValue);
+    }
+
+    function drawAngleStress(xValue, yValue, tauXY, thetaDegrees) {
+      const theta = thetaDegrees * Math.PI / 180;
+  
+      const sigmaAvg = (xValue + yValue) / 2;
+      const sigmaDiff = (xValue - yValue) / 2;
+
+      const sigmaTheta = sigmaAvg + sigmaDiff * Math.cos(2 * theta) + tauXY * Math.sin(2 * theta);
+      const tauTheta = -sigmaDiff * Math.sin(2 * theta) + tauXY * Math.cos(2 * theta);
+
+      const scaleX = xScale(sigmaTheta);
+      const scaleY = yScale(tauTheta);
+
+      drawDotWithLabel(scaleX, scaleY, `[${round(sigmaTheta)}, ${round(tauTheta)}]`);
     }
 
     function drawMohrCircle(centerX, radius) {
@@ -167,6 +198,7 @@
       drawDotWithLabel(scaleCenterX - scaleRadius, scaleCenterY, `σ₂= ${round(centerX - radius)}`);
       drawDotWithLabel(scaleCenterX, scaleCenterY - scaleRadius, `τmax= ${round(radius)}`);
       drawDotWithLabel(scaleCenterX, scaleCenterY + scaleRadius, `τmin= -${round(radius)}`);
+      drawDotWithLabel(scaleCenterX, scaleCenterY, `${round(centerX)}`);
     }
 
     function drawDotWithLabel(locationX, locationY, text) {
@@ -184,6 +216,10 @@
         .attr("cy", locationY)
         .attr("r", 3)
         .attr("fill", "black");
+    }
+
+    function calculateAndDrawAnglePoint() {
+
     }
 
     function round(num) {
