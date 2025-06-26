@@ -26,9 +26,7 @@ This project is a simple lab tool for understanding the fundamentals of geomecha
 
 ## Demo
 
-<p align="center">
-  <img src="assets/demo.gif"/>
-</p>
+![Demo](/assets/demo.gif)
 
 ## Url
 
