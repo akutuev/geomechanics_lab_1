@@ -26,10 +26,8 @@ This project is a simple lab tool for understanding the fundamentals of geomecha
 
 ## Demo
 
-<p align="center">
-  <img src="assets/demo.gif" width="660" height="419"/>
-</p>
+![Demo](/assets/demo.gif)
 
 ## Url
 
-TODO
+[TODO](https://akutuev.github.io/geomechanics_lab_1/)
