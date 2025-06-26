@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Mohr's circle</title>
+  <title>Mohr's circle 2D</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
 
   <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"> -->
@@ -34,7 +34,7 @@
   <div class="container">
     <div class="row">
       <div class="col-md-8">
-        <h2>Mohr's circle chart</h2>
+        <h2>Mohr's circle chart for 2D stress</h2>
       </div>
     </div>
     <div class="row">
@@ -57,7 +57,7 @@
             <input type="number" class="form-control" id="ShearStress" value="0">
           </div>
           <div class="form-group">
-            <label for="numberInput">Rotation angle</label>
+            <label for="numberInput">Rotation angle (mouse or keyboard)</label>
             <input type="range" class="form-range" min="0" max="180" value="0" id="AngleRange">
             <input type="number" disabled class="form-control" id="AngleInput" value="0">
           </div>
@@ -75,6 +75,8 @@
     reDrawMohrChart();
 
     function reDrawAxis(center, radius) {
+      svgScene.selectAll("*").remove();  
+
       const chSett = {
         width: 800,
         height: 800 ,
@@ -82,25 +84,30 @@
         domainLengthFromX: -10,
         domainLengthFromY: -150,
         domainLengthTo: 150,
-        domainMinMargin: -10,
-        domainMaxMargin: 10,
+        domainXminMargin: -10,
+        domainXmaxMargin: 10,
       };
 
-      // This has a bug and shuld be fixed: unproportional axis
-      // const minValue = center - radius;
-      // const maxValue = center + radius;
-      // const domainMinX = minValue < chSett.domainMinMargin ? minValue + chSett.domainMinMargin : chSett.domainMinMargin;
-      // const domainMaxX = maxValue > chSett.domainMaxMargin ? maxValue + chSett.domainMaxMargin : chSett.domainMaxMargin;
-      // .domain([domainMinX, domainMaxX])
+      const minStressValue = center - radius;
+      const maxStressValue = center + radius;
       
-      svgScene.selectAll("*").remove();  
+      const domainMinX = minStressValue < chSett.domainXminMargin 
+        ? minStressValue + chSett.domainXminMargin 
+        : chSett.domainXminMargin;
+
+      const domainMaxX = maxStressValue > chSett.domainXmaxMargin 
+        ? maxStressValue + chSett.domainXmaxMargin 
+        : chSett.domainXmaxMargin;
 
       xScale
-      .domain([chSett.domainLengthFromY, chSett.domainLengthTo])
+      .domain([domainMinX, domainMaxX])
       .range([chSett.margin, chSett.width - chSett.margin]);
 
+      const domainMaxY = (Math.abs(domainMinX) + Math.abs(domainMaxX)) / 2;
+      const domainMinY = domainMaxY * -1; 
+
       yScale
-      .domain([chSett.domainLengthFromY, chSett.domainLengthTo])
+      .domain([domainMinY, domainMaxY])
       .range([chSett.height - chSett.margin, chSett.margin]);
 
       svgScene.append("g")
@@ -139,7 +146,6 @@
       document.getElementById('Xstress').addEventListener('input', () => reDrawMohrChart());
       document.getElementById('ShearStress').addEventListener('input', () => reDrawMohrChart());
       document.getElementById('AngleRange').addEventListener('input', (event) => {
-        console.log(event.target.value);
         document.getElementById('AngleInput').value = event.target.value;
         reDrawMohrChart();
       });
@@ -203,8 +209,8 @@
 
       drawDotWithLabel(scaleCenterX + scaleRadius, scaleCenterY, `σ₁= ${round(centerX + radius)}`);
       drawDotWithLabel(scaleCenterX - scaleRadius, scaleCenterY, `σ₂= ${round(centerX - radius)}`);
-      drawDotWithLabel(scaleCenterX, scaleCenterY - scaleRadius, `τmax= ${round(radius)}`);
-      drawDotWithLabel(scaleCenterX, scaleCenterY + scaleRadius, `τmin= -${round(radius)}`);
+      drawDotWithLabel(scaleCenterX, scaleCenterY - scaleRadius, `τmax= -${round(radius)}`);
+      drawDotWithLabel(scaleCenterX, scaleCenterY + scaleRadius, `τmin= ${round(radius)}`);
       drawDotWithLabel(scaleCenterX, scaleCenterY, `${round(centerX)}`);
     }
 
