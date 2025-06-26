@@ -30,4 +30,4 @@ This project is a simple lab tool for understanding the fundamentals of geomecha
 
 ## Url
 
-[TODO](https://akutuev.github.io/geomechanics_lab_1/)
+https://akutuev.github.io/geomechanics_lab_1/index.html
